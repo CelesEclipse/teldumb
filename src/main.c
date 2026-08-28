@@ -7,16 +7,16 @@
 
 int main(int argc, char ** argv)
 {
-    printf("cc\n");
+    printf("config phase\n");
     GWConfig_t * cfg = config_alloc();
     
     if (cfg == NULL) {
         perror("Failed to alloc config");
         return 1;
     }
-    if(config_load(cfg, PATH) == 0)
-        printf("ok load\n");
+    if (config_load(cfg, PATH) != 0) return EXIT_FAILURE;
+    if (config_validate(cfg) != 0) return EXIT_FAILURE; 
 
     config_destroy(cfg);
-    return 0;
+    return EXIT_SUCCESS;
 }

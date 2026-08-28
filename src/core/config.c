@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include "gateway/core/config.h"
 
+#define PORT_MAX        65535
 #define BUFFER_SIZE     1024
 #define LOGLVL_SIZE     20
 
@@ -13,7 +14,7 @@ struct GWConfig
 {
     uint16_t    m_port;
     uint32_t    m_max_conn;
-    char        m_loglvl[LOGLVL_SIZE];
+    uint8_t     m_loglvl;
 };
 
 GWConfig_t * config_alloc()
@@ -21,6 +22,7 @@ GWConfig_t * config_alloc()
     GWConfig_t * cfg = malloc(sizeof(GWConfig_t));
     if (cfg != NULL) {
         memset(cfg, 0, sizeof(GWConfig_t));
+        cfg->m_loglvl = 6;
     }
     return cfg;
 }
@@ -55,7 +57,7 @@ int config_load(GWConfig_t * config, const char * path)
         if (strstr(line, "max_connections") != NULL) {
             sscanf(line, "max_connections = %d", &config->m_max_conn);
         } else if (strstr(line, "log_level") != NULL) {
-            sscanf(line, "log = %19s", config->m_loglvl);
+            sscanf(line, "log = %hu", &config->m_loglvl);
         } else if (strstr(line, "server_port") != NULL) {
             sscanf(line, "port = %hu", &config->m_port);
         }
@@ -72,4 +74,21 @@ void config_destroy(GWConfig_t * config)
         free(config);
     }
     config = NULL;
+}
+
+int config_validate(GWConfig_t * config)
+{
+    if (config == NULL) {
+        syslog(LOG_WARNING, "NULL config");
+        return -1;
+    }
+    if (config->m_port <= 0 || config->m_port > PORT_MAX) {
+        syslog(LOG_ERR, "invalid port %d", config->m_port);
+        return -1;
+    }
+    if (config->m_max_conn <= 0) {
+        syslog(LOG_ERR, "max connections must be greater than 0");
+        return -1;
+    }
+    return 0;
 }
