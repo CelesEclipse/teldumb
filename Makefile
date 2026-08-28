@@ -1,0 +1,16 @@
+CC = gcc
+CFLAGS = -std=c99 -Wall -Wextra -Iinclude
+
+TARGET = build/tel-gateway
+SRC = $(wildcard src/*.c src/core/*.c)
+
+all: $(TARGET)
+
+$(TARGET): $(SRC)
+	@mkdir -p build
+	$(CC) $(CFLAGS) $(SRC) -o $(TARGET)
+
+clean:
+	rm -rf build
+
+.PHONY: all clean
