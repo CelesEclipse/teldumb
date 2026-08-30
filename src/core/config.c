@@ -3,7 +3,6 @@
 #include <fcntl.h>
 #include <string.h>
 #include <stdint.h>
-#include <stdlib.h>
 
 #include "gateway/core/config.h"
 #include "gateway/log/logger.h"
@@ -93,4 +92,10 @@ int config_validate(GWConfig_t * config)
         return -1;
     }
     return 0;
+}
+
+uint8_t config_get_level(const GWConfig_t * config)
+{
+    if (config == NULL) return 1;
+    return config->m_loglvl;
 }

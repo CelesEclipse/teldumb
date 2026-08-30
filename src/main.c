@@ -9,9 +9,6 @@
 
 int main(int argc, char ** argv)
 {
-    logger_init(LOG_PATH, GW_LOG_DEBUG);
-    LOG_INF("Starting ...");
-
     GWConfig_t * cfg = config_alloc();
     
     if (cfg == NULL) {
@@ -21,6 +18,8 @@ int main(int argc, char ** argv)
     if (config_load(cfg, CFG_PATH) != 0) GW_LOG_ERR("cannot load config in main");
     if (config_validate(cfg) != 0) GW_LOG_ERR("fail elsewhere");
 
+    logger_init(LOG_PATH, cfg);
+    
     config_destroy(cfg);
     logger_shutdown();
     return EXIT_SUCCESS;
