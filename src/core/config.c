@@ -49,11 +49,11 @@ int config_load(GWConfig_t * config, const char * path)
     char * line = strtok(buffer, "\n");
     while (line != NULL)  {
         if (strstr(line, "max_connections") != NULL) {
-            sscanf(line, "max_connections = %d", &config->m_max_conn);
+            if(sscanf(line, "max_connections = %u", &config->m_max_conn) == -1) return -1;
         } else if (strstr(line, "log_level") != NULL) {
-            sscanf(line, "log = %hhu", &config->m_loglvl);
+            if(sscanf(line, "log_level = %hhu", &config->m_loglvl) == -1) return -1;
         } else if (strstr(line, "server_port") != NULL) {
-            sscanf(line, "port = %hu", &config->m_port);
+            if(sscanf(line, "server_port = %hu", &config->m_port) == -1) return -1;
         }
 
         line = strtok(NULL, "\n");

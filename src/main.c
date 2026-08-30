@@ -8,16 +8,31 @@
 
 int main(int argc, char ** argv)
 {
+    int ret = EXIT_FAILURE;
     GWConfig_t * cfg = config_alloc();
     
-    if (cfg == NULL) return 1;
-    config_load(cfg, CFG_PATH);
-    config_validate(cfg);
-
-    logger_init(LOG_PATH, config_get_level(cfg));
+    if (cfg == NULL) {
+        fprintf(stderr, "Failed to allocate configuration\n");
+        goto cleanup;
+    }
+    if (config_load(cfg, CFG_PATH) != 0) {
+        fprintf(stderr, "Failed to load configuration\n");
+        goto cleanup;
+    }
+    if (config_validate(cfg) != 0) {
+        fprintf(stderr, "Invalid configuration\n");
+        goto cleanup;
+    }
+    if (logger_init(LOG_PATH, config_get_level(cfg)) != 0) {
+        fprintf(stderr, "Failed to initialize logger\n");
+        goto cleanup;
+    }
+    
     GW_LOG_INF("Starting ...");
-
-    logger_shutdown();
-    config_destroy(cfg);
-    return EXIT_SUCCESS;
+    ret = EXIT_SUCCESS;
+    
+    cleanup:
+        logger_shutdown();
+        config_destroy(cfg);
+        return ret;
 }
