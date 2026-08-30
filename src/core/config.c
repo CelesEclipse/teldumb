@@ -1,11 +1,12 @@
 #include <sys/types.h>
 #include <stdio.h>
 #include <fcntl.h>
-#include <syslog.h>
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
+
 #include "gateway/core/config.h"
+#include "gateway/log/logger.h"
 
 #define PORT_MAX        65535
 #define BUFFER_SIZE     1024
@@ -33,11 +34,11 @@ int config_load(GWConfig_t * config, const char * path)
     int fd;
 
     if (config == NULL) {
-        syslog(LOG_WARNING, "No config to load");
+        GW_LOG_ERR("Failed to load config file");
         return -1;
     }
     if ((fd = open(path, O_RDONLY)) < 0) {
-        syslog(LOG_ERR, "Failed to open config file");
+        GW_LOG_ERR("Failed to open config file");
         return -1;
     }
     
@@ -45,7 +46,7 @@ int config_load(GWConfig_t * config, const char * path)
     char buffer[BUFFER_SIZE];
     ssize_t bytes_read = read(fd, buffer, BUFFER_SIZE - 1);
     if (bytes_read < 0) {
-        syslog(LOG_ERR, "Failed to read config raw bytes");
+        GW_LOG_ERR("Failed to read config raw bytes");
         close(fd);
         return -1;
     }
@@ -80,15 +81,15 @@ void config_destroy(GWConfig_t * config)
 int config_validate(GWConfig_t * config)
 {
     if (config == NULL) {
-        syslog(LOG_WARNING, "NULL config");
+        GW_LOG_WRN("Null config");
         return -1;
     }
     if (config->m_port <= 0 || config->m_port > PORT_MAX) {
-        syslog(LOG_ERR, "invalid port %d", config->m_port);
+        GW_LOG_ERR("Invalid port %d", config->m_port);
         return -1;
     }
     if (config->m_max_conn <= 0) {
-        syslog(LOG_ERR, "max connections must be greater than 0");
+        GW_LOG_ERR("Max connections must be greater than 0");
         return -1;
     }
     return 0;

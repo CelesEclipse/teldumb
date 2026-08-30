@@ -13,14 +13,14 @@ int logger_init(const char * file, GWLogLevel runtime_level);
 void logger_log(GWLogLevel level, const char * file, int line, const char * fmt, ...);
 void logger_shutdown(void);
 
-#define LOG_INF(fmt, ...) logger_log(GW_LOG_INFO, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
-#define LOG_WRN(fmt, ...) logger_log(GW_LOG_WARN, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
-#define LOG_ERR(fmt, ...) logger_log(GW_LOG_ERROR, __FILE__, __LINE__, fmt, ##__VA_ARGS__);
+#define GW_LOG_INF(fmt, ...) logger_log(GW_LOG_INFO, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define GW_LOG_WRN(fmt, ...) logger_log(GW_LOG_WARN, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define GW_LOG_ERR(fmt, ...) logger_log(GW_LOG_ERROR, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 
 #ifdef DEBUG_BUILD
-    #define LOG_DBG(fmt, ...) logger_log(GW_LOG_DEBUG, __FILE__, __LINE__, fmt, ##__VA_ARGS__);
+    #define GW_LOG_DBG(fmt, ...) logger_log(GW_LOG_DEBUG, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #else
-    #define LOG_DBG(fmt, ...) do {} while (0)
+    #define GW_LOG_DBG(fmt, ...) do {} while (0)
 #endif
 
 #endif

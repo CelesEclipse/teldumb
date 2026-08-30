@@ -15,11 +15,11 @@ int main(int argc, char ** argv)
     GWConfig_t * cfg = config_alloc();
     
     if (cfg == NULL) {
-        perror("Failed to alloc config");
+        GW_LOG_ERR("Failed to dynamically allocate the config");
         return 1;
     }
-    if (config_load(cfg, CFG_PATH) != 0) return EXIT_FAILURE;
-    if (config_validate(cfg) != 0) return EXIT_FAILURE; 
+    if (config_load(cfg, CFG_PATH) != 0) GW_LOG_ERR("cannot load config in main");
+    if (config_validate(cfg) != 0) GW_LOG_ERR("fail elsewhere");
 
     config_destroy(cfg);
     logger_shutdown();

@@ -32,7 +32,7 @@ void logger_log(GWLogLevel level, const char * file, int line, const char * fmt,
     char time_str[LOG_TIME_SIZE];
     if (strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", time_info) == 0) {
         // do something
-        fprintf("[INTERNAL LOG ERROR] failed to format timestamp", file, line);
+        fprintf(log_file, "[INTERNAL LOG ERROR] failed to format timestamp", file, line);
         snprintf(time_str, sizeof(time_str), "UNKNOWN-TIME");
     }
     fprintf(log_file, " [%s] [%s] [%s:%d] ", time_str, lvl_str[level], file, line);
