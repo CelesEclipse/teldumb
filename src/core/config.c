@@ -4,6 +4,7 @@
 #include <syslog.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include "gateway/core/config.h"
 
 #define PORT_MAX        65535

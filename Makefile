@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -std=c99 -Wall -Wextra -Iinclude
 
 TARGET = build/tel-gateway
-SRC = $(wildcard src/*.c src/core/*.c)
+SRC = $(wildcard src/*.c src/core/*.c src/log/*.c)
 
 all: $(TARGET)
 
