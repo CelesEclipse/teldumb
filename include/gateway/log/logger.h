@@ -1,8 +1,6 @@
 #ifndef _LOGGER_H_
 #define _LOGGER_H_
 
-#include "gateway/core/config.h"
-
 #define LOG_TIME_SIZE   36
 typedef enum {
     GW_LOG_DEBUG,
@@ -11,7 +9,7 @@ typedef enum {
     GW_LOG_ERROR
 } GWLogLevel;
 
-int logger_init(const char * file, GWConfig_t * cfg_item);
+int logger_init(const char * file, GWLogLevel runtime_level);
 void logger_log(GWLogLevel level, const char * file, int line, const char * fmt, ...);
 void logger_shutdown(void);
 

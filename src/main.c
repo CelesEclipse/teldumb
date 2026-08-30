@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "gateway/core/gateway.h"
 #include "gateway/core/config.h"
 #include "gateway/log/logger.h"
 
@@ -11,16 +10,14 @@ int main(int argc, char ** argv)
 {
     GWConfig_t * cfg = config_alloc();
     
-    if (cfg == NULL) {
-        GW_LOG_ERR("Failed to dynamically allocate the config");
-        return 1;
-    }
-    if (config_load(cfg, CFG_PATH) != 0) GW_LOG_ERR("cannot load config in main");
-    if (config_validate(cfg) != 0) GW_LOG_ERR("fail elsewhere");
+    if (cfg == NULL) return 1;
+    config_load(cfg, CFG_PATH);
+    config_validate(cfg);
 
-    logger_init(LOG_PATH, cfg);
-    
-    config_destroy(cfg);
+    logger_init(LOG_PATH, config_get_level(cfg));
+    GW_LOG_INF("Starting ...");
+
     logger_shutdown();
+    config_destroy(cfg);
     return EXIT_SUCCESS;
 }

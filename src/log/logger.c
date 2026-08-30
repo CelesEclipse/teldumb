@@ -7,11 +7,9 @@ static FILE * log_file = NULL;
 static GWLogLevel global_level = GW_LOG_INFO;
 static const char * lvl_str[] = {"GWDEBUG", "GWINFO", "GWWARNING", "GWERROR"};
 
-int logger_init(const char * file, GWConfig_t * cfg_item)
+int logger_init(const char * file, GWLogLevel runtime_level)
 {
-    if (cfg_item == NULL) return -1;
-
-    global_level = config_get_level(cfg_item);
+    global_level = runtime_level;
     if (file == NULL) {
         log_file = stdout;
         return 0;
