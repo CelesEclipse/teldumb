@@ -4,6 +4,7 @@
 #include "gateway/core/config.h"
 #include "gateway/log/logger.h"
 #include "gateway/system/gwsignal.h"
+#include "gateway/network/gwsocket.h"
 
 int main(int argc, char ** argv)
 {
@@ -38,6 +39,11 @@ int main(int argc, char ** argv)
         fprintf(stderr, "Failed to initialize signals\n");
         goto cleanup;
     }
+    if (gw_socket_create(config_get_port(cfg)) != 0) {
+        fprintf(stderr, "Failed to create gw socket in main\n");
+        goto cleanup;
+    }
+
     while (!gw_signal_should_shutdown()) {
         // polling later
         gw_signal_wait();

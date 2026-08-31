@@ -10,5 +10,6 @@ int config_validate(GWConfig_t * config);
 
 // getters
 unsigned char config_get_level(const GWConfig_t * config);
+unsigned short int config_get_port(const GWConfig_t * config);
 
 #endif

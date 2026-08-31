@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "gateway/core/config.h"
 
@@ -81,4 +82,9 @@ int config_validate(GWConfig_t * config)
 uint8_t config_get_level(const GWConfig_t * config)
 {
     return config->m_loglvl;
+}
+
+uint16_t config_get_port(const GWConfig_t * config)
+{
+    return config->m_port;
 }
