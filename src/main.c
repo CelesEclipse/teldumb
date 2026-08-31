@@ -1,3 +1,4 @@
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "gateway/core/config.h"
@@ -34,6 +35,8 @@ int main(int argc, char ** argv)
         goto cleanup;
     }
     while (!gw_signal_should_shutdown()) {
+        // polling later
+        gw_signal_wait();
     }
     
     GW_LOG_INF("Gracefully shutdown...");
