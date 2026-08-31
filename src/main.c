@@ -5,11 +5,15 @@
 #include "gateway/log/logger.h"
 #include "gateway/system/gwsignal.h"
 
-#define CFG_PATH    "configs/gateway.conf"
-#define LOG_PATH    "logs/gateway.log"
-
 int main(int argc, char ** argv)
 {
+    if (argc < 3) {
+        fprintf(stderr, "Use: %s <file_config> <file_log> \n", argv[0]);
+        return EXIT_FAILURE;
+    }
+
+    char * cfg_path = argv[1];
+    char * log_path = argv[2];
     int ret = EXIT_FAILURE;
     GWConfig_t * cfg = config_alloc();
     
@@ -17,7 +21,7 @@ int main(int argc, char ** argv)
         fprintf(stderr, "Failed to allocate configuration\n");
         goto cleanup;
     }
-    if (config_load(cfg, CFG_PATH) != 0) {
+    if (config_load(cfg, cfg_path) != 0) {
         fprintf(stderr, "Failed to load configuration\n");
         goto cleanup;
     }
@@ -25,7 +29,7 @@ int main(int argc, char ** argv)
         fprintf(stderr, "Invalid configuration\n");
         goto cleanup;
     }
-    if (logger_init(LOG_PATH, config_get_level(cfg)) != 0) {
+    if (logger_init(log_path, config_get_level(cfg)) != 0) {
         fprintf(stderr, "Failed to initialize logger\n");
         goto cleanup;
     }
