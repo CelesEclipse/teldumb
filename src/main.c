@@ -34,9 +34,9 @@ int main(int argc, char ** argv)
         goto cleanup;
     }
     while (!gw_signal_should_shutdown()) {
-        GW_LOG_INF("Starting ...");
     }
     
+    GW_LOG_INF("Gracefully shutdown...");
     ret = EXIT_SUCCESS;
 
     cleanup:

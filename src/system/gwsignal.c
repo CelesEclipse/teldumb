@@ -10,7 +10,6 @@ volatile sig_atomic_t keep_running = 1;
 static void shutdown_hdl(int signum)
 {
     (void)signum;
-    fprintf(stdout, "Gracefully shutdown ...\n");
     keep_running = 0;
 }
 
