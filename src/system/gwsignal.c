@@ -30,7 +30,7 @@ int gw_signal_init(void)
     sigaddset(&mask, SIGTERM);
     
     // use a wait function to wrap sigsuspend, block and save signal to the old_mask here
-    if (sigprocmask(SIG_BLOCK, &mask, &old_mask) < 0) return -1;
+    // if (sigprocmask(SIG_BLOCK, &mask, &old_mask) < 0) return -1;
     return 0;
 }
 
