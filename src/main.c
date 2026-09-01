@@ -39,14 +39,23 @@ int main(int argc, char ** argv)
         fprintf(stderr, "Failed to initialize signals\n");
         goto cleanup;
     }
-    if (gw_socket_create(config_get_port(cfg)) != 0) {
+
+    int listen_fd;
+    if ((listen_fd = gw_socket_create(config_get_port(cfg))) < 0) {
         fprintf(stderr, "Failed to create gw socket in main\n");
         goto cleanup;
     }
 
     while (!gw_signal_should_shutdown()) {
         // polling later
-        gw_signal_wait();
+        int client_fd = gw_socket_accept(listen_fd);
+        if (client_fd == -2) break;
+        if (client_fd < 0) continue;
+
+        GW_LOG_INF("Client connected fd = %d", client_fd);
+        gw_socket_close(client_fd);
+
+        // gw_signal_wait();
     }
     
     GW_LOG_INF("Gracefully shutdown...");

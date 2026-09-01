@@ -39,7 +39,7 @@ int gw_socket_create(uint16_t port)
         goto errout;
     }
     
-    return 0;
+    return fd;
     errout:
         err = errno;
         gw_socket_close(fd);
@@ -51,4 +51,21 @@ int gw_socket_close(int fd)
 {
     if (close(fd) < 0) return -1;
     return 0;
+}
+
+int gw_socket_accept(int fd)
+{
+    int err;
+    int clfd = accept(fd, NULL, NULL);
+    if (clfd < 0) {
+        if (errno == EINTR) return -2;
+        perror("Failed to accept a client connection");
+        goto errout;
+    }
+    
+    return clfd;
+    errout:
+        err = errno;
+        errno = err;
+        return -1;
 }
