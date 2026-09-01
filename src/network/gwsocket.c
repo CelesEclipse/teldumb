@@ -78,7 +78,7 @@ ssize_t gw_socket_recv(int fd, void *buf, size_t len)
         perror("recv");
         goto errout;
     } else if (bytes_recv == 0) {
-
+        gw_socket_close(fd);
     }
 
     return bytes_recv;
@@ -90,16 +90,17 @@ ssize_t gw_socket_recv(int fd, void *buf, size_t len)
 
 ssize_t gw_socket_send(int fd, const void *buf, size_t len)
 {
-    int err;
-    ssize_t bytes_sent;
-    if ((bytes_sent = send(fd, buf, len, 0)) < 0) {
-        perror("send");
-        goto errout;
+    const char * ptr = buf;
+    size_t total_bytes_sent = 0;
+    while (total_bytes_sent < len) {
+        ssize_t n = send(fd, ptr + total_bytes_sent, len - total_bytes_sent, 0);
+        if (n < 0) {
+            if (errno == EINTR) continue;
+            return -1;
+        } else if (n == 0) {
+            return total_bytes_sent;
+        }
+        total_bytes_sent += n;
     }
-
-    return bytes_sent;
-    errout:
-        err = errno;
-        errno = err;
-        return -1;
+    return total_bytes_sent;
 }

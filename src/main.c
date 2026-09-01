@@ -55,24 +55,29 @@ int main(int argc, char ** argv)
         if (client_fd == -2) break;
         if (client_fd < 0) continue;
 
-        GW_LOG_INF("Client connected fd = %d", client_fd);
-        ssize_t bytes;
-        if ((bytes = gw_socket_recv(client_fd, buf, sizeof(buf))) < 0) {
-            GW_LOG_ERR("Failed to receive msg from client fd = %d", client_fd);
-            gw_socket_close(client_fd);
-            continue;
-        }
-        buf[bytes] = '\0';
-        GW_LOG_INF("Received msg from client fd = %d, msg = %s", client_fd, buf);
+        GW_LOG_INF("Client connected . client_fd = %d", client_fd);
+        while (1) {
+            ssize_t bytes = gw_socket_recv(client_fd, buf, sizeof(buf) - 1);
 
-        if (gw_socket_send(client_fd, buf, bytes) < 0) {
-            GW_LOG_ERR("Failed to send msg to client fd = %d", client_fd);
-            gw_socket_close(client_fd);
-            continue;
+            if (bytes < 0) {
+                GW_LOG_ERR("Failed to receive from fd = %d", client_fd);
+                break;
+            }
+
+            if (bytes == 0) {
+                GW_LOG_INF("Client disconnected fd = %d", client_fd);
+                break;
+            }
+
+            buf[bytes] = '\0';
+            GW_LOG_INF("Received msg from client fd = %d, msg = %s", client_fd, buf);
+            if (gw_socket_send(client_fd, buf, bytes) < 0) {
+                GW_LOG_ERR("Failed to send to fd = %d", client_fd);
+                break;
+            }
+            GW_LOG_INF("Sent msg to client fd = %d, msg = %s", client_fd, buf);
         }
-        GW_LOG_INF("Send msg to client = %s", buf);
         gw_socket_close(client_fd);
-        // gw_signal_wait();
     }
     
     GW_LOG_INF("Gracefully shutdown...");
