@@ -1,6 +1,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "gateway/core/config.h"
 #include "gateway/log/logger.h"
 #include "gateway/system/gwsignal.h"
@@ -46,6 +47,8 @@ int main(int argc, char ** argv)
         goto cleanup;
     }
 
+    char buf[1024];
+    
     while (!gw_signal_should_shutdown()) {
         // polling later
         int client_fd = gw_socket_accept(listen_fd);
@@ -53,8 +56,22 @@ int main(int argc, char ** argv)
         if (client_fd < 0) continue;
 
         GW_LOG_INF("Client connected fd = %d", client_fd);
-        gw_socket_close(client_fd);
+        ssize_t bytes;
+        if ((bytes = gw_socket_recv(client_fd, buf, sizeof(buf))) < 0) {
+            GW_LOG_ERR("Failed to receive msg from client fd = %d", client_fd);
+            gw_socket_close(client_fd);
+            continue;
+        }
+        buf[bytes] = '\0';
+        GW_LOG_INF("Received msg from client fd = %d, msg = %s", client_fd, buf);
 
+        if (gw_socket_send(client_fd, buf, bytes) < 0) {
+            GW_LOG_ERR("Failed to send msg to client fd = %d", client_fd);
+            gw_socket_close(client_fd);
+            continue;
+        }
+        GW_LOG_INF("Send msg to client = %s", buf);
+        gw_socket_close(client_fd);
         // gw_signal_wait();
     }
     

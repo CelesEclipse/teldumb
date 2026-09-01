@@ -69,3 +69,37 @@ int gw_socket_accept(int fd)
         errno = err;
         return -1;
 }
+
+ssize_t gw_socket_recv(int fd, void *buf, size_t len)
+{
+    int err;
+    ssize_t bytes_recv;
+    if ((bytes_recv = recv(fd, buf, len, 0)) < 0) {
+        perror("recv");
+        goto errout;
+    } else if (bytes_recv == 0) {
+
+    }
+
+    return bytes_recv;
+    errout:
+        err = errno;
+        errno = err;
+        return -1;
+}
+
+ssize_t gw_socket_send(int fd, const void *buf, size_t len)
+{
+    int err;
+    ssize_t bytes_sent;
+    if ((bytes_sent = send(fd, buf, len, 0)) < 0) {
+        perror("send");
+        goto errout;
+    }
+
+    return bytes_sent;
+    errout:
+        err = errno;
+        errno = err;
+        return -1;
+}
