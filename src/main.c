@@ -81,7 +81,7 @@ int main(int argc, char ** argv)
                 break;
             }
             GW_LOG_INF("Received data from client, fd = %d, size = %zu", client_fd, (size_t)bytes);
-            memcpy(stream_buffer + buffer_size, temp_rx_buf, sizeof(bytes));
+            memcpy(stream_buffer + buffer_size, temp_rx_buf, (size_t)bytes);
             buffer_size += (size_t)bytes;
 
             // Loop through the memory, it seems ... a single recv() call might pulled multipackets
