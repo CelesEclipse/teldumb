@@ -1,8 +1,10 @@
+#include <bits/stdint-uintn.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "gateway/core/config.h"
+#include "gateway/core/command.h"
 #include "gateway/log/logger.h"
 #include "gateway/system/gwsignal.h"
 #include "gateway/network/gwsocket.h"
@@ -46,8 +48,6 @@ int main(int argc, char ** argv)
         fprintf(stderr, "Failed to create gw socket in main\n");
         goto cleanup;
     }
-
-    char buf[1024];
     
     while (!gw_signal_should_shutdown()) {
         // polling later
@@ -56,8 +56,14 @@ int main(int argc, char ** argv)
         if (client_fd < 0) continue;
 
         GW_LOG_INF("Client connected . client_fd = %d", client_fd);
+
+        // initialize stream buffer for client
+        uint8_t stream_buffer[8 * MAX_BUF_LEN];
+        size_t buffer_size = 0;
+
         while (1) {
-            ssize_t bytes = gw_socket_recv(client_fd, buf, sizeof(buf) - 1);
+            uint8_t temp_rx_buf[MAX_BUF_LEN];
+            ssize_t bytes = gw_socket_recv(client_fd, temp_rx_buf, sizeof(temp_rx_buf));
 
             if (bytes < 0) {
                 GW_LOG_ERR("Failed to receive from fd = %d", client_fd);
@@ -69,13 +75,50 @@ int main(int argc, char ** argv)
                 break;
             }
 
-            buf[bytes] = '\0';
-            GW_LOG_INF("Received msg from client fd = %d, msg = %s", client_fd, buf);
-            if (gw_socket_send(client_fd, buf, bytes) < 0) {
-                GW_LOG_ERR("Failed to send to fd = %d", client_fd);
+            // Append received bytes to our urgh.. stream buf
+            if (buffer_size + (size_t)bytes > sizeof(stream_buffer)) {
+                GW_LOG_ERR("Buffre overflow occured on fd = %d! Dropping client ...", client_fd);
                 break;
             }
-            GW_LOG_INF("Sent msg to client fd = %d, msg = %s", client_fd, buf);
+            GW_LOG_INF("Received data from client, fd = %d, size = %zu", client_fd, (size_t)bytes);
+            memcpy(stream_buffer + buffer_size, temp_rx_buf, sizeof(bytes));
+            buffer_size += (size_t)bytes;
+
+            // Loop through the memory, it seems ... a single recv() call might pulled multipackets
+            while (1) {
+                char clean_payload[MAX_ARG_LEN];
+                size_t total_bytes_consumed = 0;
+
+                int frame_status = gw_parse_msglen_prefixing(stream_buffer, buffer_size,
+                                                            &total_bytes_consumed, clean_payload, sizeof(clean_payload));
+                
+                if (frame_status == 0) break; // wait for more
+                if (frame_status < 0) {
+                    GW_LOG_ERR("Invalid or corrupt frame length for client fd = %d", client_fd);
+                    break;
+                }
+
+                // Parse phase
+                GWCmd_t * current_cmd = gw_parse_alloc();
+                if (gw_parse_extract_cmd(clean_payload, current_cmd) == 1) {
+                    uint8_t tx_buf[4 + MAX_BUF_LEN];
+                    int out_pkt_size = gw_parse_dispatch_cmd(current_cmd, tx_buf, sizeof(tx_buf));
+
+                    if (out_pkt_size > 0) {
+                        gw_socket_send(client_fd, tx_buf, out_pkt_size);
+                        GW_LOG_INF("Sent data to the client, fd = %d, size = %u", client_fd, out_pkt_size);
+                    }
+                }
+                
+                // Do I need to do memory alignment ? 
+                // something like : slide any unparsed bytes remaining
+                size_t remaining_bytes = buffer_size - total_bytes_consumed;
+                if (remaining_bytes > 0) {
+                    memmove(stream_buffer, stream_buffer + total_bytes_consumed, remaining_bytes);
+                }
+                buffer_size = remaining_bytes;
+                gw_parse_destroy(current_cmd);
+            }
         }
         gw_socket_close(client_fd);
     }
