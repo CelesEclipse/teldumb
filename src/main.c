@@ -86,7 +86,7 @@ int main(int argc, char ** argv)
 
             // Loop through the memory, it seems ... a single recv() call might pulled multipackets
             while (1) {
-                char clean_payload[MAX_ARG_LEN];
+                char clean_payload[MAX_FRAME_LEN];
                 size_t total_bytes_consumed = 0;
 
                 int frame_status = gw_parse_msglen_prefixing(stream_buffer, buffer_size,
@@ -110,8 +110,7 @@ int main(int argc, char ** argv)
                     }
                 }
                 
-                // Do I need to do memory alignment ? 
-                // something like : slide any unparsed bytes remaining
+                // buffer compaction
                 size_t remaining_bytes = buffer_size - total_bytes_consumed;
                 if (remaining_bytes > 0) {
                     memmove(stream_buffer, stream_buffer + total_bytes_consumed, remaining_bytes);

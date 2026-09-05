@@ -7,6 +7,7 @@
 #define PAYLOAD_LEN     15
 #define MAX_CMD_LEN     20
 #define MAX_ARG_LEN     20
+#define MAX_FRAME_LEN   256
 #define MAX_BUF_LEN     1024
 
 typedef enum

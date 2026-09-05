@@ -85,7 +85,7 @@ int gw_parse_extract_cmd(const char * parsed_str, GWCmd_t * out_cmd)
     char cmd_token[MAX_CMD_LEN];
     char arg_token[MAX_ARG_LEN];
 
-    if (out_cmd == NULL || parsed_str == NULL) goto errout;
+    if (out_cmd == NULL || parsed_str == NULL) return -1;
     if ((tokens = sscanf(parsed_str, "%s %s", cmd_token, arg_token)) == -1) return -1;
 
     if (strcasecmp(cmd_token, "REGISTER") == 0) out_cmd->command = REGISTER;
