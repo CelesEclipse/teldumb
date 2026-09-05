@@ -1,16 +1,36 @@
 import socket
 import struct
+import psutil
+
+def clear_port_if_blocked(port):
+
+    """Finds and kills any active local process using the specified port."""
+    for proc in psutil.process_iter(['pid', 'name']):
+        try:
+            for conn in proc.net_connections(kind='inet'):
+                if conn.laddr.port == port:
+                    print(f"Port {port} is occupied. Killing {proc.info['name']} (PID: {proc.info['pid']})...")
+                    proc.kill()
+                    # Wait slightly for the OS to release the socket completely
+                    proc.wait(timeout=2)
+                    return True
+        except (psutil.AccessDenied, psutil.NoSuchProcess, psutil.ZombieProcess):
+            pass
+    return False
 
 def run_command_sequence(host='127.0.0.1', port=8080, commands=None):
     if commands is None:
         return
+
+    # Check and clear the port before starting
+    clear_port_if_blocked(port)
 
     # Connect to the C server once
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         s.connect((host, port))
     except ConnectionRefusedError:
-        print(f"X Error: Connection refused on {host}:{port}")
+        print(f"Error: Connection refused on {host}:{port}. ")
         return
 
     for payload in commands:
@@ -29,7 +49,7 @@ def run_command_sequence(host='127.0.0.1', port=8080, commands=None):
             response_payload = s.recv(response_len)
             print(f"< Received: {response_payload.decode()}")
         else:
-            print("X Error: Failed to read 4-byte response header from server.")
+            print("Error: Failed to read 4-byte response header from server.")
             break
 
     # Clean up socket closure after the sequence completes
