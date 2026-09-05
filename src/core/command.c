@@ -42,6 +42,12 @@ void gw_parse_destroy(GWCmd_t *cmd)
     cmd = NULL;
 }
 
+GWCommand_t gw_parse_getcmd(const GWCmd_t * cmd)
+{
+    if (!cmd) return (GWCommand_t)-1;
+    return cmd->command;
+}
+
 int gw_parse_msglen_prefixing(const void * raw_stream,
                 size_t available_bytes,
                 size_t * out_consumed,

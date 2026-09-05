@@ -24,6 +24,7 @@ typedef struct GWCmd GWCmd_t;
 
 GWCmd_t *   gw_parse_alloc(void);
 void        gw_parse_destroy(GWCmd_t * cmd);
+GWCommand_t gw_parse_getcmd(const GWCmd_t * cmd);
 
 int gw_parse_msglen_prefixing(const void * raw_stream,
                 size_t available_bytes,

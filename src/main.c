@@ -5,6 +5,7 @@
 #include <string.h>
 #include "gateway/core/config.h"
 #include "gateway/core/command.h"
+#include "gateway/core/connection.h"
 #include "gateway/log/logger.h"
 #include "gateway/system/gwsignal.h"
 #include "gateway/network/gwsocket.h"
@@ -57,6 +58,12 @@ int main(int argc, char ** argv)
 
         GW_LOG_INF("Client connected . client_fd = %d", client_fd);
 
+        GWCnt_State_t * current_state = gw_cntstate_alloc();
+        if (!current_state) {
+            GW_LOG_WRN("Failed to allocate command state");
+            continue;
+        }
+
         // initialize stream buffer for client
         uint8_t stream_buffer[8 * MAX_BUF_LEN];
         size_t buffer_size = 0;
@@ -100,25 +107,35 @@ int main(int argc, char ** argv)
 
                 // Parse phase
                 GWCmd_t * current_cmd = gw_parse_alloc();
+                int status_state = 0;
+
+                if (!current_cmd) {
+                    GW_LOG_WRN("Failed to allocate command state objects");
+                    break;
+                }
+
                 if (gw_parse_extract_cmd(clean_payload, current_cmd) == 1) {
                     uint8_t tx_buf[4 + MAX_BUF_LEN];
-                    int out_pkt_size = gw_parse_dispatch_cmd(current_cmd, tx_buf, sizeof(tx_buf));
+                    int out_pkt_size = gw_cntstate_process(current_state, current_cmd, tx_buf, sizeof(tx_buf), &status_state);
 
-                    if (out_pkt_size > 0) {
+                    if (status_state == 1 && out_pkt_size > 0) {
                         gw_socket_send(client_fd, tx_buf, out_pkt_size);
                         GW_LOG_INF("Sent data to the client, fd = %d, size = %u", client_fd, out_pkt_size);
+                    } else if (status_state < 0) {
+                        GW_LOG_ERR("State violation/dispatch fail. code = %d", status_state);
                     }
                 }
-                
+                gw_parse_destroy(current_cmd);
+
                 // buffer compaction
                 size_t remaining_bytes = buffer_size - total_bytes_consumed;
                 if (remaining_bytes > 0) {
                     memmove(stream_buffer, stream_buffer + total_bytes_consumed, remaining_bytes);
                 }
                 buffer_size = remaining_bytes;
-                gw_parse_destroy(current_cmd);
             }
         }
+        gw_cntstate_destroy(current_state);
         gw_socket_close(client_fd);
     }
     
