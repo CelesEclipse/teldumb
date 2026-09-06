@@ -1,4 +1,3 @@
-# Import the function from your client.py file
 from utils import run_command_sequence
 
 HOST = '127.0.0.1'

@@ -123,6 +123,12 @@ int main(int argc, char ** argv)
                         GW_LOG_INF("Sent data to the client, fd = %d, size = %u", client_fd, out_pkt_size);
                     } else if (status_state < 0) {
                         GW_LOG_ERR("State violation/dispatch fail. code = %d", status_state);
+
+                        if (status_state == -5) {
+                            GW_LOG_WRN("Identity mismatch detected!, Dropping client fd = %d", client_fd);
+                            gw_socket_close(client_fd);
+                            break;
+                        }
                     }
                 }
                 gw_parse_destroy(current_cmd);

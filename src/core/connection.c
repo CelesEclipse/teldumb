@@ -8,7 +8,7 @@
 struct GWCnt_State
 {
     int clfd;
-    int client_id;
+    char client_id[64];
     GWConnection_State_t state;
 };
 
@@ -52,24 +52,30 @@ int gw_cntstate_process(GWCnt_State_t * cnt, GWCmd_t * cmd_ptr, unsigned char * 
         
         case STATE_CONNECTED: {
             if (cmd == REGISTER) {
-                // Command is valid for this state -> Execute it!
                 result = gw_parse_dispatch_cmd(cmd_ptr, out_resp, max_len);
                 if (result > 0) {
-                    cnt->state = STATE_REGISTERED; // Transition state
-                    *out_status = 1;               // Success status
+                    strncpy(cnt->client_id, gw_parse_getarg(cmd_ptr), sizeof(cnt->client_id) - 1);
+                    cnt->client_id[sizeof(cnt->client_id) - 1] = '\0';
+                    cnt->state = STATE_REGISTERED;
+                    *out_status = 1;
                 } else {
-                    *out_status = -1;              // Dispatcher internal failure
+                    *out_status = -1;
                 }
             } else {
                 // Unauthorized command for this state
-                *out_status = -2; // Protocol violation: Must register first
-                return -1;        // Return failure; do NOT call dispatch
+                *out_status = -2;
+                return -1;
             }
             break;
         }
 
         case STATE_REGISTERED: {
             if (cmd == AUTH) {
+                if (strcmp(cnt->client_id, gw_parse_getarg(cmd_ptr)) != 0) {
+                    *out_status = -5;
+                    return -1;
+                }
+
                 result = gw_parse_dispatch_cmd(cmd_ptr, out_resp, max_len);
                 if (result > 0) {
                     cnt->state = STATE_AUTHENTICATED;
@@ -78,11 +84,10 @@ int gw_cntstate_process(GWCnt_State_t * cnt, GWCmd_t * cmd_ptr, unsigned char * 
                     *out_status = -1;
                 }
             } else if (cmd == PING) {
-                // If you want to allow PING at registered state
                 result = gw_parse_dispatch_cmd(cmd_ptr, out_resp, max_len);
                 *out_status = 1;
             } else {
-                *out_status = -2; // Protocol violation: Must authenticate first
+                *out_status = -2;
                 return -1;
             }
             break;
@@ -107,19 +112,19 @@ int gw_cntstate_process(GWCnt_State_t * cnt, GWCmd_t * cmd_ptr, unsigned char * 
                     return -1;
                     
                 default:
-                    *out_status = -1; // Unknown command
+                    *out_status = -1;
                     return -1;
             }
-            break; // Fixed missing break here!
+            break;
         }
 
         default: {
-            *out_status = -4; // Critical internal error state
+            *out_status = -4;
             return -1;
         }
     }
 
-    return result; // Returns total packet size on success
+    return result;
 }
 
 

@@ -1,21 +1,32 @@
 import socket
 import struct
 import psutil
+import os
 
 def clear_port_if_blocked(port):
-
-    """Finds and kills any active local process using the specified port."""
+    """
+    Checks if a port is in use (like a lightweight lsof).
+    If it's free, skips quietly.
+    If occupied, kills the process holding it (unless it's this script).
+    """
+    my_pid = os.getpid()
+    
     for proc in psutil.process_iter(['pid', 'name']):
+        if proc.info['pid'] == my_pid:
+            continue
+            
         try:
             for conn in proc.net_connections(kind='inet'):
-                if conn.laddr.port == port:
-                    print(f"Port {port} is occupied. Killing {proc.info['name']} (PID: {proc.info['pid']})...")
+                if conn.laddr.port == port and conn.status == 'LISTEN':
+                    print(f"Port {port} is occupied by {proc.info['name']} (PID: {proc.info['pid']}). Killing it...")
                     proc.kill()
-                    # Wait slightly for the OS to release the socket completely
                     proc.wait(timeout=2)
+                    print(f"Port {port} has been freed.")
                     return True
         except (psutil.AccessDenied, psutil.NoSuchProcess, psutil.ZombieProcess):
             pass
+            
+    # If no process was found listening on that port, skip quietly
     return False
 
 def run_command_sequence(host='127.0.0.1', port=8080, commands=None):
@@ -23,7 +34,7 @@ def run_command_sequence(host='127.0.0.1', port=8080, commands=None):
         return
 
     # Check and clear the port before starting
-    clear_port_if_blocked(port)
+    # clear_port_if_blocked(port)
 
     # Connect to the C server once
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
