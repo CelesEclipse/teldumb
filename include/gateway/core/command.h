@@ -27,6 +27,10 @@ void        gw_parse_destroy(GWCmd_t * cmd);
 GWCommand_t gw_parse_getcmd(const GWCmd_t * cmd);
 const char * gw_parse_getarg(const GWCmd_t * cmd);
 
+// setters for test
+void gw_parse_setarg(GWCmd_t * cmd, const char * arg);
+void gw_parse_setcmd(GWCmd_t * cmd, GWCommand_t cmd_to_set);
+
 int gw_parse_msglen_prefixing(const void * raw_stream,
                 size_t available_bytes,
                 size_t * out_consumed,

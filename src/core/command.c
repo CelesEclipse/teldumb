@@ -54,6 +54,18 @@ const char * gw_parse_getarg(const GWCmd_t * cmd)
     return cmd->argument;
 }
 
+void gw_parse_setarg(GWCmd_t *cmd, const char *arg)
+{
+    if (!cmd) return;
+    strcpy(cmd->argument, arg);
+}
+
+void gw_parse_setcmd(GWCmd_t * cmd, GWCommand_t cmd_to_set)
+{
+    if (!cmd) return;
+    cmd->command = cmd_to_set;
+}
+
 int gw_parse_msglen_prefixing(const void * raw_stream,
                 size_t available_bytes,
                 size_t * out_consumed,
