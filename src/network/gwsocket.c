@@ -70,6 +70,32 @@ int gw_socket_accept(int fd)
         return -1;
 }
 
+int gw_socket_connect(const char *ip_str, uint16_t port)
+{
+    int fd;
+    if ((fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
+        perror("Failed to initialize a client socket");
+        return -1;
+    }
+
+    struct sockaddr_in addr;
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(port);
+
+    if (inet_pton(AF_INET, ip_str, &addr.sin_addr) <= 0) {
+        perror("Invalid address");
+        gw_socket_close(fd);
+        return -1;
+    }
+
+    if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+        perror("Failed to connect to server");
+        gw_socket_close(fd);
+        return -1;
+    }
+    return fd;
+}
+
 ssize_t gw_socket_recv(int fd, void *buf, size_t len)
 {
     int err;

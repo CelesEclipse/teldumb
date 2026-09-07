@@ -8,7 +8,7 @@
 struct GWCnt_State
 {
     int clfd;
-    char client_id[64];
+    char client_id[CLIENT_SIZE];
     GWConnection_State_t state;
 };
 

@@ -3,6 +3,8 @@
 
 #include "gateway/core/command.h"
 
+#define CLIENT_SIZE 64
+
 typedef enum
 {
     STATE_CONNECTED,

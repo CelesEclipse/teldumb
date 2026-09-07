@@ -5,15 +5,22 @@ CXXFLAGS = -std=c++17 -Wall -Wextra -Iinclude -g
 TEST_LIBS = -lgtest -lgtest_main -lpthread
 
 TARGET = build/tel-gateway
-TEST_TARGET = build/run_tests
 OBJ_DIR = build/obj
+
+# Test Targets & Binaries
+UNIT_TEST_TARGET = build/run_unit_tests
+INT_TEST_TARGET = build/run_integration_tests
 
 # Gather all source files
 SRC = $(wildcard src/*.c src/core/*.c src/log/*.c src/system/*.c src/network/*.c)
 CORE_SRC = $(filter-out src/main.c, $(SRC))
 CORE_OBJS = $(patsubst %.c, $(OBJ_DIR)/%.o, $(CORE_SRC))
 
-.PHONY: all clean test
+# Separate Test File Sources
+UNIT_TEST_SRC = $(wildcard tests/unit/*.cpp)
+INT_TEST_SRC = $(wildcard tests/integration/*.cpp)
+
+.PHONY: all clean test integration
 
 all: $(TARGET)
 
@@ -26,17 +33,27 @@ $(OBJ_DIR)/%.o: %.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-test: $(TEST_TARGET)
+# ---- UNIT TESTING ----
+test: $(UNIT_TEST_TARGET)
 	@echo "========================================="
-	@echo "        Running GoogleTest Suite        "
+	@echo "        Running Unit Test Suite        "
 	@echo "========================================="
-	./$(TEST_TARGET)
+	./$(UNIT_TEST_TARGET)
 
-$(TEST_TARGET): tests/unit/test_gateway.cpp $(CORE_OBJS)
+$(UNIT_TEST_TARGET): $(UNIT_TEST_SRC) $(CORE_OBJS)
 	@mkdir -p build
-	$(CXX) $(CXXFLAGS) $^ $(TEST_LIBS) -o $(TEST_TARGET)
+	$(CXX) $(CXXFLAGS) $^ $(TEST_LIBS) -o $(UNIT_TEST_TARGET)
+
+# ---- INTEGRATION TESTING ----
+integration: $(INT_TEST_TARGET)
+	@echo "========================================="
+	@echo "     Running Integration Test Suite      "
+	@echo "========================================="
+	./$(INT_TEST_TARGET)
+
+$(INT_TEST_TARGET): $(INT_TEST_SRC) $(CORE_OBJS)
+	@mkdir -p build
+	$(CXX) $(CXXFLAGS) $^ $(TEST_LIBS) -o $(INT_TEST_TARGET)
 
 clean:
 	rm -rf build
-
-.PHONY: all clean test
