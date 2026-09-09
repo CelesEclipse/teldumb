@@ -3,12 +3,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
+#include <sys/epoll.h>
 #include "gateway/core/config.h"
 #include "gateway/core/command.h"
 #include "gateway/core/connection.h"
 #include "gateway/log/logger.h"
 #include "gateway/system/gwsignal.h"
 #include "gateway/network/gwsocket.h"
+#include "gateway/network/gwepoll.h"
+
+#define TEMP_EPOLL_FLAG_DEBUG 1
 
 int main(int argc, char ** argv)
 {
@@ -49,7 +54,63 @@ int main(int argc, char ** argv)
         fprintf(stderr, "Failed to create gw socket in main\n");
         goto cleanup;
     }
+
+#ifdef TEMP_EPOLL_FLAG_DEBUG
+    int epfd = gw_epoll_create();
+
+    struct epoll_event events[3];
+    if (gw_epoll_add(epfd, listen_fd, EPOLLIN) < 0) {
+        GW_LOG_ERR("Failed to create epoll entry");
+        goto cleanup;
+    }
     
+    
+    while (1) {
+        int client_fd;
+        int ndfs = gw_epoll_wait(epfd, events, 3);
+        GW_LOG_INF("epoll_wait returned %d", ndfs);
+        for (int i = 0; i < ndfs; ++i) {
+            if (events[i].data.fd == listen_fd) {
+                client_fd = gw_socket_accept(listen_fd);
+                if (client_fd == -2) break;
+                if (client_fd < 0) continue;
+                GW_LOG_INF("Client connected . client_fd = %d", client_fd);
+
+                if (gw_epoll_add(epfd, client_fd, EPOLLIN) < 0) {
+                    GW_LOG_ERR("Failed to registry client_fd = %d", client_fd);
+                    break;
+                }
+            } else {
+                // LT + Non blocking 
+                // ET doesn't change epoll registration, I should not abuse it
+                int evfd = events[i].data.fd;
+                int flags = fcntl(evfd, F_GETFL, 0);
+                fcntl(evfd, F_SETFL, flags | O_NONBLOCK);
+
+                // data process
+                GWCnt_State_t * current_state = gw_cntstate_alloc();
+                if (!current_state) continue;
+
+                uint8_t stream_buffer[8 * MAX_BUF_LEN];
+                size_t buffer_size = 0;
+                while (1) {
+                    uint8_t temp_rx_buf[MAX_BUF_LEN];
+                    ssize_t bytes = gw_socket_recv(evfd, temp_rx_buf, sizeof(temp_rx_buf)); 
+                    if (bytes < 0) break;
+                    if (bytes == 0) break;
+                    if (buffer_size + (size_t)bytes > sizeof(stream_buffer)) break;
+
+                    GW_LOG_INF("Received data from client, fd = %d, size = %zu", evfd, (size_t)bytes);
+                    memcpy(stream_buffer + buffer_size, temp_rx_buf, (size_t)bytes);
+                    buffer_size += (size_t)bytes;
+                }
+                gw_cntstate_destroy(current_state);
+            }
+        }
+    }
+
+#endif
+
     while (!gw_signal_should_shutdown()) {
         // polling later
         int client_fd = gw_socket_accept(listen_fd);
@@ -84,7 +145,7 @@ int main(int argc, char ** argv)
 
             // Append received bytes to our urgh.. stream buf
             if (buffer_size + (size_t)bytes > sizeof(stream_buffer)) {
-                GW_LOG_ERR("Buffre overflow occured on fd = %d! Dropping client ...", client_fd);
+                GW_LOG_ERR("Buffer overflow occured on fd = %d! Dropping client ...", client_fd);
                 break;
             }
             GW_LOG_INF("Received data from client, fd = %d, size = %zu", client_fd, (size_t)bytes);

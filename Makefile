@@ -1,6 +1,6 @@
 CC = gcc
 CXX = g++
-CFLAGS = -std=c99 -Wall -Wextra -Iinclude -g
+CFLAGS = -std=c99 -Wall -Wextra -Iinclude -g -DTEMP_EPOLL_FLAG_DEBUG
 CXXFLAGS = -std=c++17 -Wall -Wextra -Iinclude -g
 TEST_LIBS = -lgtest -lgtest_main -lpthread
 
